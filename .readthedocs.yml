@@ -1,0 +1,36 @@
+# Docs:
+# https://docs.readthedocs.io/en/stable/config-file/v2.html
+# https://docs.readthedocs.io/en/stable/build-customization.html
+#
+# NOTE: Please, don't copy this file to build django docs on readthedocs.com
+# This is very specific to our needs (because this project is a template).
+# Also, we have a lot of configuration on rtd's admin side.
+#
+# End projects most of the time do not need any `.readthedocs.yml` file at all.
+version: 2
+
+# Set the version of Python and other tools you might need
+build:
+  os: ubuntu-22.04
+  tools:
+    python: '3.11'
+  jobs:
+    # See https://github.com/readthedocs/readthedocs.org/issues/4912
+    pre_create_environment:
+      # Select Python version (keep in sync with other versions):
+      - asdf install python 3.11.9
+      - asdf global python 3.11.9
+      - python -m pip install --upgrade --no-cache-dir virtualenv
+
+      # Install poetry:
+      - asdf plugin add poetry
+      - asdf install poetry latest
+      - asdf global poetry latest
+      - poetry config virtualenvs.create false
+    post_install:
+      # We build django with `DJANGO_ENV=production`, so no dev deps:
+      - . "$READTHEDOCS_VIRTUALENV_PATH/bin/activate" && cd '{{cookiecutter.project_name}}' && poetry install --only main --only docs
+
+sphinx:
+  configuration: '{{cookiecutter.project_name}}/docs/conf.py'
+  fail_on_warning: true
